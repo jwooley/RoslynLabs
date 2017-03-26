@@ -1,0 +1,9 @@
+C:\Projects\RoslynLabs\Lab3-End\Analyzer1\Analyzer1\Analyzer1\bin\Debug\Diagnostic.nuspec
+C:\Projects\RoslynLabs\Lab3-End\Analyzer1\Analyzer1\Analyzer1\bin\Debug\tools\install.ps1
+C:\Projects\RoslynLabs\Lab3-End\Analyzer1\Analyzer1\Analyzer1\bin\Debug\tools\uninstall.ps1
+C:\Projects\RoslynLabs\Lab3-End\Analyzer1\Analyzer1\Analyzer1\bin\Debug\Analyzer1.dll
+C:\Projects\RoslynLabs\Lab3-End\Analyzer1\Analyzer1\Analyzer1\bin\Debug\Analyzer1.pdb
+C:\Projects\RoslynLabs\Lab3-End\Analyzer1\Analyzer1\Analyzer1\obj\Debug\Analyzer1.Resources.resources
+C:\Projects\RoslynLabs\Lab3-End\Analyzer1\Analyzer1\Analyzer1\obj\Debug\Analyzer1.csproj.GenerateResource.Cache
+C:\Projects\RoslynLabs\Lab3-End\Analyzer1\Analyzer1\Analyzer1\obj\Debug\Analyzer1.dll
+C:\Projects\RoslynLabs\Lab3-End\Analyzer1\Analyzer1\Analyzer1\obj\Debug\Analyzer1.pdb

@@ -1,0 +1,8 @@
+C:\Projects\RoslynAndYou\Labs\Lab2-End\bin\Debug\Lab1-Start.dll.config
+C:\Projects\RoslynAndYou\Labs\Lab2-End\bin\Debug\Lab1-Start.dll
+C:\Projects\RoslynAndYou\Labs\Lab2-End\bin\Debug\Lab1-Start.pdb
+C:\Projects\RoslynAndYou\Labs\Lab2-End\bin\Debug\Lab1-Start.dll.CodeAnalysisLog.xml
+C:\Projects\RoslynAndYou\Labs\Lab2-End\bin\Debug\Lab1-Start.dll.lastcodeanalysissucceeded
+C:\Projects\RoslynAndYou\Labs\Lab2-End\obj\Debug\Lab2-End.csprojResolveAssemblyReference.cache
+C:\Projects\RoslynAndYou\Labs\Lab2-End\obj\Debug\Lab1-Start.dll
+C:\Projects\RoslynAndYou\Labs\Lab2-End\obj\Debug\Lab1-Start.pdb
