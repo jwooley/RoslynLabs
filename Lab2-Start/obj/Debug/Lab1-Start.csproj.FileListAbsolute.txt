@@ -1,8 +1,0 @@
-C:\Projects\RoslynAndYou\Lab1-Start\obj\Debug\Lab1-Start.csprojResolveAssemblyReference.cache
-C:\Projects\RoslynAndYou\Lab1-Start\bin\Debug\Lab1-Start.dll.config
-C:\Projects\RoslynAndYou\Lab1-Start\bin\Debug\Lab1-Start.dll
-C:\Projects\RoslynAndYou\Lab1-Start\bin\Debug\Lab1-Start.pdb
-C:\Projects\RoslynAndYou\Lab1-Start\bin\Debug\Lab1-Start.dll.CodeAnalysisLog.xml
-C:\Projects\RoslynAndYou\Lab1-Start\bin\Debug\Lab1-Start.dll.lastcodeanalysissucceeded
-C:\Projects\RoslynAndYou\Lab1-Start\obj\Debug\Lab1-Start.dll
-C:\Projects\RoslynAndYou\Lab1-Start\obj\Debug\Lab1-Start.pdb
