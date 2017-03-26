@@ -78,15 +78,15 @@ namespace Lab1_Start
             {
                 return true;
             }
-            if (Age == 3)
+            else if (Age == 3)
             {
                 return true;
             }
-            if (Age == 5)
+            else if (Age == 5)
             {
                 return true;
             }
-            if (Age == 8)
+            else if (Age == 8)
             {
                 return true;
             }
