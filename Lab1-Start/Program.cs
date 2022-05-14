@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System;
+using System.IO;
 
 namespace Lab1_Start
 {
@@ -25,6 +26,12 @@ namespace Lab1_Start
             {
             }
         }
+
+        public static void TryUsingDisposableWithoutDisposing()
+        {
+            var toDispose = new ToDispose();
+            toDispose.Write("test");
+        }
         public Person GetJim()
         {
             Person person = new Person { };
@@ -36,8 +43,6 @@ namespace Lab1_Start
     }
     public class Person
     {
-        private ToDispose ShouldBeDisposed = new ToDispose();
-
         private string _name;
         public string Name
         {
@@ -64,7 +69,7 @@ namespace Lab1_Start
             }
         }
         int VotingAge = 18;
-        Uri Blog = new Uri("thinqlinq");
+        Uri Blog { get; } = new Uri("thinqlinq");
 
         public bool IsPrime()
         {
@@ -108,9 +113,19 @@ namespace Lab1_Start
     }
     public class ToDispose : IDisposable
     {
+        private StringWriter sw = new StringWriter();
+        public ToDispose()
+        {
+
+        }
+        public void Write(string value)
+        {
+            sw.Write(value);
+        }
         public void Dispose()
         {
             // Dispose me
+            sw.Dispose();
         }
     }
 }
