@@ -1,42 +1,44 @@
 ﻿using System;
 using System.Linq;
+using System.IO;
 
 namespace Lab1Start
 {
 
-    public class Class1
+    public static class Class1
     {
-        public void ShouldUseVar(string input)
+        public static void ShouldUseVar(string input)
         {
             try
             {
                 if (string.IsNullOrEmpty(input))
-                {
-                    throw new ArgumentException("input");
-                }
+                    throw new ArgumentException(null, nameof(input));
 
-                Person person = GetJim();
+                Person person = Jim;
                 Console.Write($"{person.Name} is {person.Age} years old");
-                Console.WriteLine("His parent is {0}", person.Parent.Name);
+                Console.WriteLine($"His parent is {person.Parent.Name}");
+                Console.WriteLine($"Blog name {person.Blog}");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
         }
-        public Person GetJim()
+
+        public static void TryUsingDisposableWithoutDisposing()
         {
-            var person = new Person();
-            person.Age = 42;
-            person.Name = "Jim";
-            person.Parent = null;
-            return person;
+            using var toDispose = new ToDispose();
+            toDispose.Write("test");
         }
+        public static Person Jim =>
+                 new()
+                 {
+                     Age = 42,
+                     Name = "Jim",
+                     Parent = null
+                 };
     }
-    public class Person : IDisposable
+    public class Person
     {
-
-        private ToDispose ShouldBeDisposed = new ToDispose();
-
         private string _name;
         public string Name
         {
@@ -62,8 +64,9 @@ namespace Lab1Start
                 return false;
             }
         }
-        int VotingAge = 18;
-        Uri Blog = new Uri("thinqlinq");
+
+        readonly int VotingAge = 18;
+        public Uri Blog { get; } = new Uri("thinqlinq");
 
         public bool IsPrime()
         {
@@ -94,45 +97,39 @@ namespace Lab1Start
                 return false;
             }
         }
-        public string SayHello()
+        public static string SayHello()
         {
             var hello = "Hello";
-            for (var i = 0; i < 20; i++)
+            for (int i = 0; i < 20; i++)
             {
                 hello += "Hello";
             }
             return hello;
         }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        private void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                ShouldBeDisposed.Dispose();
-            }
-        }
     }
     public class ToDispose : IDisposable
     {
-        public const string SOMECONSTANT = "123";
-
-        public void Dispose()
+        private readonly StringWriter sw = new();
+        public ToDispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+
         }
-        private void Dispose(bool disposing)
+        public void Write(string value)
+        {
+            sw.Write(value);
+        }
+        protected virtual void Dispose(bool disposing)
         {
             if (disposing)
             {
-                // Get rid of resources
+                sw.Dispose();
             }
         }
-
+        public void Dispose()
+        {
+            // Dispose me
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
     }
 }

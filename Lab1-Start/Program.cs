@@ -21,6 +21,7 @@ namespace Lab1_Start
                 Person person = GetJim();
                 Console.Write($"{person.Name} is {person.Age} years old");
                 Console.WriteLine("His parent is [1]", person.Parent.Name, person.Parent.Parent.Age);
+                Console.WriteLine($"His blog is {person.Blog}");
             }
             catch (Exception ex)
             {
@@ -69,7 +70,7 @@ namespace Lab1_Start
             }
         }
         int VotingAge = 18;
-        Uri Blog { get; } = new Uri("thinqlinq");
+        public Uri Blog { get; } = new Uri("thinqlinq");
 
         public bool IsPrime()
         {
