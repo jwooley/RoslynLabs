@@ -5,24 +5,43 @@
 namespace Lab1Start
 {
     using System;
+    using System.IO;
 
+    /// <summary>
+    /// Disposable sample.
+    /// </summary>
     public class ToDispose : IDisposable
     {
-        public const string SOMECONSTANT = "123";
+        private readonly StringWriter sw = new ();
 
+        /// <summary>
+        /// Write to the log.
+        /// </summary>
+        /// <param name="value">Value to write.</param>
+        public void Write(string value)
+        {
+            sw.Write(value);
+        }
+
+        /// <summary>
+        /// Dispose.
+        /// </summary>
         public void Dispose()
         {
+            // Dispose me
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-#pragma warning disable CC0091 // Use static method
-        private void Dispose(bool disposing)
-#pragma warning restore CC0091 // Use static method
+        /// <summary>
+        /// Dispose.
+        /// </summary>
+        /// <param name="disposing">If disposing.</param>
+        protected virtual void Dispose(bool disposing)
         {
             if (disposing)
             {
-                // Get rid of resources
+                sw.Dispose();
             }
         }
     }
