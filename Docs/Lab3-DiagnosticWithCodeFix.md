@@ -21,47 +21,40 @@ public class TestControllerMisnamed : Controller
 ```
 
 This code compiles fine, but poses a hidden bug that could cause plenty
-of headache at runtime . If you look closer, you’ll notice that the
-class is misnamed. MVC uses a convention based approach where the
+of headache at runtime. If you look closer, you’ll notice that the
+class is misnamed. The .Net Framework version of MVC uses a convention based approach where the
 controller class’s name must end in the word “Controller” otherwise, the
 routing engine will not locate the controller at runtime and result in a
 HTTP 404 – Not Found exception when attempting to navigate to the route.
 To avoid this, we’ll build a Roslyn diagnostic with code fix to detect
 the error and offer a resolution to the issue.
 
-## Install Visual Studio 2017 with the Roslyn SDK
+## Install Visual Studio with the Roslyn SDK
 
 To get started, we need to ensure the SDK and tools are installed. If
-you are using Visual Studio 2017, open the installer and select the
+you are using Visual Studio 2022, open the installer and select the
 Visual Studio extension development workload. This will install the
 libraries and Syntax Visualizer tool that we will use later.
 
 <img src="media/Lab3-image1.png" style="width:6.21528in;height:3.89078in" />
 
-Now that you have the tools, you will need to download and install the
-Visual Studio templates from
-<https://go.microsoft.com/fwlink/?LinkID=526901>.
-
-If you are using Visual Studio 2015, you can find the instructions to
-install the Visual Studio SDK at
-<https://msdn.microsoft.com/en-us/library/mt683786.aspx>.
+If you want to use the directed graph feature of the visualizer to graphically see the syntax tree, also go into the `Individual Components` tab and select the `DGML Editor` option. 
+<img src="media/Lab3-DGMLEditor.png" />
 
 ## Creating the project
 
-With the SDK installed, it’s time to create your first analyzer. From
-File -\> New Project, select the Extensibility templates and locate the
-“Analyzer with Code Fix (NuGet + VSIX)” template. Name the project or
+With the SDK installed, it’s time to create your first analyzer. Launch Visual Studio and select `Create a new project`. Search for `Roslyn` to find the installed templates for `Stand alone analyzer` and `Analyzer with code fix`.
+<img src="media/Lab3-NewProject.png" />
+ Since we want to build a tool for developers to get feedback while they are writing their code and offer a suggested fix, select the `Analyzer with code fix (.NET Standard)` option. NOTE: This is not a .Net 6 project. Visual Studio is built on .Net Framework and still depends on the older project types in the runtime.
+ Name the project or
 just take the defaults and click Ok.
+The template creates a
+solution with four projects:
 
-<img src="media/Lab3-image2.png" style="width:6.48958in;height:4.0625in"
-alt="C:\Users\Jim\AppData\Local\Microsoft\Windows\INetCache\Content.Word\FileNew-Analyzer.png" />
-
-<img src="media/Lab3-image3.png"
-style="width:2.60417in;height:2.98958in" />The template creates a
-solution with three projects:
-
--   Analyze1r – This is the main analyzer library and contains the core
+-   Analyzer1 – This is the main analyzer library and contains the core
     logic for the tool.
+    - Analyzer1.CodeFixes - This contains the Code fixes that apply to the analyzers above. These two projects can be combined if you want to manage the analyzers and fixes as a single deployable package.
+    - Analyzer1.Package - Contains the scripts needed when building and deploying the package to nuget. We can ignore this for now.
 
 -   Analyzer1.Test – This is a unit test project. Unit tests are the
     best way to test and debug your analyzer. We’ll use this later in
@@ -74,16 +67,18 @@ solution with three projects:
     severity level to None and simplifies the deployment mechanism to
     just NuGet packges.)
 
+<img src="media/Lab3-SolutionStructure.png" />
+
 ## Implementing the Analyzer
 
 Let’s start implementing our analyzer. From the solution explorer, open
-the DiagnosticAnalyzer. Start by changing the DiagnosticIId constant to
-a value that you will use to recognize it in the ruleset editor. This is
+the Analyzer1's `Analyzer1Analyzer.cs` file. Start by changing the DiagnosticIId constant to
+a value that you will use to recognize it in the `.editorconfig` and to associate the analyzer with applicable code fixes. This is
 typically an abbreviated name of the analyzer tool and a unique number
-within that tool. In our case, change this to INDY0001:
+within that tool. In our case, change this to `LAB0001`:
 
 ```cs
-public const string DiagnosticId = "Indy0001";
+public const string DiagnosticId = "LAB0001";
 ```
 
 Next, we need to modify the configuration information that we’ll use to
@@ -91,31 +86,35 @@ register our fix with Visual Studio. This will include a title,
 description, message, category and default severity. The default
 template from the SDK that we created this project from uses a resource
 file to manage these values and stores them in a resource file so that
-it can be easily globalized. Open the Resources.resx file and update
+it can be easily globalized. Open the `Resources.resx` file and update
 these as follows:
 
 <img src="media/Lab3-image4.png" style="width:6.5in;height:1.89236in" />
 
-Returning to the DiagnosticAnalyzer.cs file, let’s adjust the Rule that
+Returning to the `Analyzer1Analyzer.cs` file, let’s adjust the Rule that
 we will use to register with Visual Studio for our fix. Since the
 diagnostic that we’re creating detects issues that will cause errors at
 runtime, let’s adjust the default severity on our rule to
 DiagnosticSeverity.Error as follows:
 
 ```cs
-private static DiagnosticDescriptor Rule = 
+private static readonly DiagnosticDescriptor Rule = 
+    new DiagnosticDescriptor(
+        DiagnosticId, 
+        Title, 
+        MessageFormat, 
+        Category, 
+        DiagnosticSeverity.Error, 
+        isEnabledByDefault: true, 
+        description: Description);
 
-    new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat, 
-        Category, DiagnosticSeverity.Error, 
-        isEnabledByDefault: true, 
-        description: Description);
 ```
 
 We can leave the rest of the configuration section alone and just stay
 with the values set in the template. Now we can turn our attention to
 the implementation code.
 
-Our implementation starts with the Initialize method. Here we indicate
+The sample template uses a ridiculous rule trying to force all class names to all upper case. They use a crazy rule here to make sure that developers don't keep it in their deployed code. Our implementation starts with the Initialize method. Here we indicate
 the type of code that we want to detect and when to detect it. In the
 Initialize method. Place a dot after context to explore the actions you
 can register. They are:
@@ -173,40 +172,30 @@ logic to detect if there is a potential error. Change the Analyzer
 implementation to the following:
 
 ```cs
-private void AnalyzeSymbol(SymbolAnalysisContext context)
-
+private static void AnalyzeSymbol(SymbolAnalysisContext context)
 {
-
-    var symbol = (INamedTypeSymbol)context.Symbol;
-
-    if (symbol.BaseType == null) return;
-
-    if ((symbol.BaseType.Name == "Controller" 
-
-|| symbol.BaseType.Name == "ApiController") &&
-
-        !symbol.Name.EndsWith("Controller"))
-
-    {
-
-        var diagnostic = Diagnostic.Create(Rule, 
-
-symbol.Locations\[0\], symbol.Name);
-
-        context.ReportDiagnostic(diagnostic);
-
-    }
-
+    if (context.Symbol is INamedTypeSymbol symbol)
+    {
+        if (symbol.BaseType == null) return;
+        if ((symbol.BaseType.Name == "Controller"
+                || symbol.BaseType.Name == "ApiController")
+            && !symbol.Name.EndsWith("Controller"))
+        {
+            var diagnostic = Diagnostic.Create(Rule,
+            symbol.Locations[0], symbol.Name);
+            context.ReportDiagnostic(diagnostic);
+        }
+    }
 }
 ```
 
-In this code, we start by casting the context’s `Symbol` as an
+In this code, we use pattern matching to test and cast the context’s `Symbol` to an
 `INamedTypeSymbol`. We should be safe here because when we registered the
 rule, we told Roslyn to only let our analyzer know about Named Type
 symbols. Next, we check to see if our class derives from any other
 types. If it doesn’t, there’s no reason to evaluate any other
 conditions. Roslyn best practices dictate that we exit out of the
-process as soon as we can to increase performance.
+process as soon as we can to avoid unnecessary cycles and allocations to increase performance.
 
 If we do have a base class, we’ll check to see if that class name is
 Controller or ApiController and if so, see if our class’s name ends in
@@ -226,65 +215,37 @@ diagnostic.
 
 ## Implementing the CodeFix
 
-In the Analyzer project, open the CodeFixProvider.cs file from the
+In the `Analyzer1.CodeFixes` project, open the `Analyzer1CodeFixProvider.cs` file from the
 template. We’ll update this code to implement our fix. The beginning of
-the CodeFixProvider primarily consists of boiler plate. We’ll just
-change the title constant to be more appropriate to our tool.
-```cs
-private const string title = "Ensure type ends in 'Controller'"
-```
+the CodeFixProvider primarily consists of boiler- plate code. We’ll just
+change the title constant to be more appropriate to our tool.in the `CodeFixResources.resx` file, update the CodeFixTitle's value to be `Ensure type ends in 'Controller'.`
+
 The meat of our work is in the RegisterCodeFixesAsync method and in the
 actual fixer method. Delete the template’s MakeUppercaseAsync method and
 replace it with the following method that performs the fix:
 ```cs
-private async Task\<Document\> MakeEndInControllerAsync(
-
-Document document, 
-
-TypeDeclarationSyntax typeDecl, 
-
-CancellationToken cancellationToken)
-
+private static async Task<Document> MakeEndInControllerAsync(
+    Document document,
+    TypeDeclarationSyntax typeDecl,
+    CancellationToken cancellationToken)
 {
+    var identifierToken = typeDecl.Identifier;
+    var originalName = identifierToken.Text;
+    var nameWithoutController =
+        Regex.Replace(originalName, "controller", String.Empty,
+        RegexOptions.IgnoreCase);
 
-    var identifierToken = typeDecl.Identifier;
+    var newName = nameWithoutController + "Controller";
+    var root = await document.GetSyntaxRootAsync(cancellationToken);
 
-    var originalName = identifierToken.Text;
+    var newIdentifier = SyntaxFactory.Identifier(newName)
+        .WithAdditionalAnnotations(Formatter.Annotation);
+    var newDeclaration =
+        typeDecl.ReplaceToken(identifierToken, newIdentifier);
+    var newRoot = root.ReplaceNode(typeDecl, newDeclaration);
 
-    var nameWithoutController = 
-
-Regex.Replace(originalName, "controller", String.Empty, 
-
-RegexOptions.IgnoreCase);
-
-    var newName = nameWithoutController + "Controller";
-
-    var semanticModel = 
-
-await document.GetSemanticModelAsync(cancellationToken);
-
-    var typeSymbol = 
-
-semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
-
-    var root = await document.GetSyntaxRootAsync(cancellationToken);
-
-    var newIdentifier = SyntaxFactory.Identifier(newName)
-
-        .WithAdditionalAnnotations(Formatter.Annotation);
-
-    var newDeclaration = 
-
-typeDecl.ReplaceToken(identifierToken, newIdentifier);
-
-    var newRoot = root.ReplaceNode(typeDecl, newDeclaration);
-
-    return document
-
-        .WithSyntaxRoot(newRoot);
-
-          
-
+    return document
+        .WithSyntaxRoot(newRoot);
 }
 ```
 
@@ -301,9 +262,12 @@ registers the fix in the RegisterCodeFixesAsync method. The last line
 should be changed to:
 
 ```cs
-context.RegisterCodeFix(CodeAction.Create(title, 
-
-c =\> MakeEndInControllerAsync(context.Document, declaration, c)), diagnostic);
+context.RegisterCodeFix(
+    CodeAction.Create(
+        title: CodeFixResources.CodeFixTitle, 
+        createChangedDocument: c=> MakeEndInControllerAsync(context.Document, declaration, c),
+        equivalenceKey: nameof(CodeFixResources.CodeFixTitle)),
+    diagnostic);
 ```
 ## Debugging the change
 
@@ -311,18 +275,20 @@ At this point, the code should be ready to test. Press F5 to debug the
 application. This will launch a second “Experimental” version of Visual
 Studio. Realize that VS can’t debug the extension if it is installed in
 its own workspace, thus we need to create a new workspace to test
-against. When the new instance opens, create a new MVC web site. Open
-the HomeController and rename it to HomeControllerMisnamed. If all goes
+against. When the new instance opens, open the `WebApplication1` solution located in `Lab3-End`. Open
+the HomeController.cs file and notice it is HomeControllerMisnamed. If all goes
 well, you should see the class name underlined with a code lightbulb
 identifying the issue that your analyzer identified. You can always put
 a breakpoint in your AnalyzeSymbol method to interrogate the various
 objects from your test code base.
 
-<img src="media/Lab3-image5.png" style="width:6.5in;height:1.67014in" />Expanding
+<img src="media/Lab3-image5.png" />
+
+Expanding
 the potential code fixes, you should be presented with a diff between
 the current value and the revised fix that you wrote.
 
-<img src="media/Lab3-image6.png" style="width:6.5in;height:1.93194in" />
+<img src="media/Lab3-image6.png" />
 
 ## Adding tests
 
@@ -331,257 +297,179 @@ takes a while to spin up Visual Studio and test interactively. The
 better alternative is to create coded unit tests that exercises input
 code snippets and asserts that the analyzer detects positive and
 negative scenarios and can fix the code based on your fix logic. Open
-the unittests.cs file in the .Test project. Replace the test method with
+the `Analyzer1UnitTests.cs` file in the .Test project. Replace the test method with
 the following test (don’t replace the overrides for
 GetCSharpCodeFixProvider or GetCSharpDiagnosticAnalyzer):
 
 ```cs
-[TestMethod]
-
-public void MvcClassWithoutConstructorFixes()
-
+        [TestMethod]
+        public async Task MvcClassWithoutConstructorFixes()
+        {
+            var test = @"
+using System.Web.Mvc;
+namespace WebApplicationCS.Controllers
 {
-
-    var test = @"
-
-using System.Web.Mvc;
-
-namespace WebApplicationCS.Controllers
-
-{
-
-    public class HomeControllerTest : Controller
-
-    {
-
-        public ActionResult Index()
-
-        {
-
-            return View();
-
-        }
-
-    }
-
-}";
-
-    var expected = new DiagnosticResult
-
-    {
-
-        Id = "Indy0001",
-
-        Message = String.Format("Type name '{0}' does not end in Controller", "HomeControllerTest"),
-
-        Severity = DiagnosticSeverity.Error,
-
-        Locations =
-
-            new\[\] {
-
-                   new DiagnosticResultLocation("Test0.cs", 6, 18)
-
-                }
-
-    };
-
-    VerifyCSharpDiagnostic(test, expected);
-
-    var fixtest = @"
-
-using System.Web.Mvc;
-
-namespace WebApplicationCS.Controllers
-
-{
-
-    public class HomeTestController : Controller
-
-    {
-
-        public ActionResult Index()
-
-        {
-
-            return View();
-
-        }
-
-    }
-
-}";
-
-    VerifyCSharpFix(test, fixtest);
-
+    public class HomeControllerTest : Controller
+    {
+        public ActionResult Index()
+        {
+            return new ActionResult();
+        }
+    }
 }
+namespace System.Web.Mvc
+{
+    public class Controller { }
+    public class ActionResult { }
+}
+";
+
+            var expected = VerifyCS.Diagnostic("Lab001")
+                .WithArguments("HomeControllerTest")
+                .WithSpan(5, 18, 5, 36)
+                .WithSeverity(Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
+
+            await VerifyCS.VerifyAnalyzerAsync(test, expected);
+            var fixtest = @"
+using System.Web.Mvc;
+namespace WebApplicationCS.Controllers
+{
+    public class HomeTestController : Controller
+    {
+        public ActionResult Index()
+        {
+            return new ActionResult();
+        }
+    }
+}
+namespace System.Web.Mvc
+{
+    public class Controller { }
+    public class ActionResult { }
+}
+";
+            await VerifyCS.VerifyCodeFixAsync(test, expected, fixtest);
+        }
 ```
 
 Run the test and see that it passes. If it indicates errors, try
-debugging the test. Now, isn’t this a quicker option? Try adding another
-test to check cases where the class derives from ApiController as well
-as Controller. You should also be able to write tests to make sure that
-if the class name does end in “Controller” that the analyzer does not
-fire. Also ensure that the analyzer doesn’t fire if the class doesn’t
-inherit from Controler.
+debugging the test. Now, isn’t this a quicker option? 
 
 Before we declare this done, let’s try to make one change to our test.
 Add a constructor to both the test and fixtest strings as follows and
 run the new test:
 
 ```cs
-//Diagnostic and CodeFix both triggered and checked for
-
-\[TestMethod\]
-
-public void MvcClassNotEndingInControllerCreatesDiagnostics()
-
+        [TestMethod]
+        public async Task MvcClassWithConstructorFixes()
+        {
+            var test = @"
+using System.Web.Mvc;
+namespace WebApplicationCS.Controllers
 {
-
-    var test = @"
-
-using System.Web.Mvc;
-
-namespace WebApplicationCS.Controllers
-
-{
-
-    public class HomeControllerTest : Controller
-
-    {
-
-public HomeControllerTest()
-
-{
-
+    public class HomeControllerTest : Controller
+    {
+        public HomeControllerTest()
+        {
+        }
+        public ActionResult Index()
+        {
+            return new ActionResult();
+        }
+    }
 }
-
-        public ActionResult Index()
-
-        {
-
-            return View();
-
-        }
-
-    }
-
-}";
-
-    var expected = new DiagnosticResult
-
-    {
-
-        Id = ControllerNamingConventionAnalyzer.DiagnosticId,
-
-        Message = String.Format("Type name '{0}' does not end in Controller", "HomeControllerTest"),
-
-        Severity = DiagnosticSeverity.Warning,
-
-        Locations =
-
-            new\[\] {
-
-                    new DiagnosticResultLocation("Test0.cs", 6, 18)
-
-                }
-
-    };
-
-   VerifyCSharpDiagnostic(test, expected);
-
-    var fixtest = @"
-
-using System.Web.Mvc;
-
-namespace WebApplicationCS.Controllers
-
+namespace System.Web.Mvc
 {
+    public class Controller { }
+    public class ActionResult { }
+}
+";
 
-    public class HomeTestController : Controller
+            var expected = VerifyCS.Diagnostic("Lab001")
+                .WithArguments("HomeControllerTest")
+                .WithSpan(5, 18, 5, 36)
+                .WithSeverity(Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
 
-    {
-
-public HomeTestController()
-
+            await VerifyCS.VerifyAnalyzerAsync(test, expected);
+            var fixtest = @"
+using System.Web.Mvc;
+namespace WebApplicationCS.Controllers
 {
-
+    public class HomeTestController : Controller
+    {
+        public HomeTestController()
+        {
+        }
+        public ActionResult Index()
+        {
+            return new ActionResult();
+        }
+    }
 }
-
-        public ActionResult Index()
-
-        {
-
-            return View();
-
-        }
-
-    }
-
-}";
-
-    VerifyCSharpFix(test, fixtest);
-
+namespace System.Web.Mvc
+{
+    public class Controller { }
+    public class ActionResult { }
 }
+";
+            await VerifyCS.VerifyCodeFixAsync(test, expected, fixtest);
+        }
+
 ```
 Oops, it appears that this test fails. Take a look back at your fix
 code. Notice that it handled changing the name of the class, but didn’t
 fix any references to that new class name, including the
 self-referencing constructor. Let’s make a small change to our fix code
-to leverage a Roslyn helper method. Update it to the following:
+to leverage a Roslyn helper method. Update the `Analyzer1CodeFixProvider's MakeEndInControllerAsync` method to the following:
 ```cs
-private async Task\<Solution\> MakeEndInControllerAsync(
+        private static async Task<Solution> MakeEndInControllerAsync(
+            Document document,
+            TypeDeclarationSyntax typeDecl,
+            CancellationToken cancellationToken)
+        {
+            var identifierToken = typeDecl.Identifier;
+            var originalName = identifierToken.Text;
+            var nameWithoutController =
+                Regex.Replace(originalName, "controller", String.Empty,
+                RegexOptions.IgnoreCase);
 
-Document document, 
+            var newName = nameWithoutController + "Controller";
+            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+            var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
+            
+            // Produce a new solution that has all references to that type renamed, including the declaration.
+            var originalSolution = document.Project.Solution;
+            var optionSet = originalSolution.Workspace.Options;
+            var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, typeSymbol, newName, optionSet, cancellationToken).ConfigureAwait(false);
 
-TypeDeclarationSyntax typeDecl, 
-
-CancellationToken cancellationToken)
-
-{
-
-    var identifierToken = typeDecl.Identifier;
-
-    var originalName = identifierToken.Text;
-
-    var nameWithoutController = 
-
-Regex.Replace(originalName, "controller", String.Empty, 
-
-RegexOptions.IgnoreCase);
-
-    var newName = nameWithoutController + "Controller";
-
-    var semanticModel = 
-
-await document.GetSemanticModelAsync(cancellationToken);
-
-    var typeSymbol = 
-
-semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
-
-    var originalSolution = document.Project.Solution;
-
-    var optionSet = originalSolution.Workspace.Options;
-
-    var newSolution = 
-
-await Renamer.RenameSymbolAsync(originalSolution, typeSymbol,
-
-newName, optionSet, cancellationToken)
-
-.ConfigureAwait(false);
-
-    return newSolution;
-
-}
+            // Return the new solution with the now-uppercase type name.
+            return newSolution;
+        }
+```
+The renaming works not only on the selected symbol, but needs access to the full solution semantic model on order to determine all of the reference points (even from separate projects). As a result, we need to modify how this method is wired in. Update the RegiterCodeFix method as follows:
+```cs
+            context.RegisterCodeFix(
+                CodeAction.Create(
+                    title: CodeFixResources.CodeFixTitle, 
+                    createChangedSolution: c=> MakeEndInControllerAsync(context.Document, declaration, c),
+                    equivalenceKey: nameof(CodeFixResources.CodeFixTitle)),
+                diagnostic);
 ```
 Re-run your test and it should now pass.
 
 ## Additional challenge
 
 Now that you have finished this test, you’re ready to try your hand at
-some more challenges. For example, the current test doesn’t handle cases
+some more challenges. 
+
+- Try adding some more
+tests to check cases where the class derives from ApiController as well
+as Controller. You should also be able to write tests to make sure that
+if the class name does end in “Controller” that the analyzer does not
+fire. (Hint, don't include the expected parameter in the call to `VerifyAnalyzerAsync`.) Also ensure that the analyzer doesn’t fire if the class doesn’t
+inherit from Controller. See the tests in the Lab3-End solution if you get stuck.
+
+-  For a more advanced case, the current analyzer doesn’t handle cases
 where the class derives from a controller method in another namespace.
 Also, it doesn’t work if you use a custom BaseController which derives
 from Controller. Try updating the analyzer to be able to test for these
