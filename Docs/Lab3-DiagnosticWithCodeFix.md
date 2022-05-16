@@ -38,10 +38,30 @@ libraries and Syntax Visualizer tool that we will use later.
 
 <img src="media/Lab3-image1.png" style="width:6.21528in;height:3.89078in" />
 
-If you want to use the directed graph feature of the visualizer to graphically see the syntax tree, also go into the `Individual Components` tab and select the `DGML Editor` option. 
+If you want to use the directed graph feature of the visualizer to graphically see the syntax tree, also go into the `Individual Components` tab and select the `.Net Compiler Platform SDK` and `DGML Editor` options. 
 <img src="media/Lab3-DGMLEditor.png" />
 
-## Creating the project
+## Exploring code with the Syntax Visualizer
+Before we start manipulating code, we need to understand the structure of the code a bit more. If you built your own compiler, you would need to build a lexer and parser to understand the various pieces of the text files that represent code concepts in a specific language. One of the major benefits that Roslyn brings is that it has already done the heavy lifting of code understanding for C# and VB code. When you installed the .Net Compiler Platform SDK, you added a tool to view the code structure called the "Syntax Visualizer". Let's take a couple minutes exploring this tool that lets us peek into the syntax trees that the compiler understands, and that we will need to understand in order to explore code and re-write it for the analyzers and code fixes.
+
+Open the WebApplication1 project in the Lab3-End folder. From there open the HomeController that we will be checking and fixing later in this lab. Once the controller is open, from the Visual Studio top menu, select `View` -> `Other Windows` -> `Syntax Visualizer`.
+<img src="media/Lab3-SyntaxVisualizer1.png" />
+I often find it helpful to dock this along with the solution explorer to allow us to click on code and see the related tree easily. In the controller code window, click on the class name `HomeControllerMisnamed`. Notice that the Syntax Visualizer navigates and highlights the IdentifierToken for the class name.
+<img src="media/Lab3-SyntaxVisualizer2.png" />
+Now click on the `Class Declaration` node in the syntax tree. Notice that the entire class is now highlighted in the code window. Try clicking around more in the code and visualizer tree and see how the two views interact.
+
+If you installed the DGML Editor tool in Visual Studio, you should have access to a more graphical representation of the syntax tree. Let's test this out by right clicking on the ConstructorDeclaration node and selecting `View Directed Syntax Graph`.
+<img src="media/Lab3-ConstructorDirectedGraph.png" />
+In both the tree and graph, we can see a number of node types broadly categorized as:
+- Syntax Node - Parsed language concepts and types. These can be nested.
+- Token - Character values for the node
+- Trivia Node - including comments, whitespace, End of line, etc. Technically, the compiler doesn't need to deal with the trivia, but when we are building code fixes, the trivia need to be observed and maintained in order for your developers not to complain about your tools removing their painstakingly constructed comments and whitespace alignments.
+
+Let's check one more thing in the Syntax Visualizer. Once again, right click on the `Class Definition` node in the tree. This time, select the option to `View Symbol (if any)`
+<img src="media/Lab3-ClassDefinitionType.png" />
+Notice in the property window below the `Kind` is `NamedType`. While this may not be very meaningful now, it will soon be crucial when we start to create the Analyzer for our feature. Let's stop just looking at code and start to put this information into action. 
+
+## Creating the Analyzer with Code Fix
 
 With the SDK installed, it’s time to create your first analyzer. Launch Visual Studio and select `Create a new project`. Search for `Roslyn` to find the installed templates for `Stand alone analyzer` and `Analyzer with code fix`.
 <img src="media/Lab3-NewProject.png" />
@@ -65,7 +85,7 @@ solution with four projects:
     typical deployments unless you create Code Refactoring packages.
     (Many refactorings are actually done by setting the analyzer’s
     severity level to None and simplifies the deployment mechanism to
-    just NuGet packges.)
+    just NuGet packages.)
 
 <img src="media/Lab3-SolutionStructure.png" />
 
@@ -131,7 +151,7 @@ can register. They are:
 As a general guide, we need to use the least invasive and performance
 intensive option in order to keep our analyzer from needlessly hogging
 resources. In our case, we only need to evaluate our rule if the class
-name or its base class changes. As a result, we can just use the
+name or its base class changes. When we were looking at the syntax tree with the syntax visualizer, we found that we can identify the class definition as a Symbol. As a result, we can just use the
 RegisterSymbolAction.
 
 Next, we need to identify the kind of symbol that we want to watch. If
@@ -158,7 +178,7 @@ values:
 -   TypeParameter
 -   Preprocessing
 
-In the case of a class, we’re dealing with a `NamedType`. As a result,
+Remember from the `Syntax Visualizer` tool we recognized that the class definition was a `SymbolKind` of `NamedType`. As a result,
 we’re just going to leave the Initialize implementation alone and use
 the value from the template:
 
@@ -446,7 +466,7 @@ to leverage a Roslyn helper method. Update the `Analyzer1CodeFixProvider's MakeE
             return newSolution;
         }
 ```
-The renaming works not only on the selected symbol, but needs access to the full solution semantic model on order to determine all of the reference points (even from separate projects). As a result, we need to modify how this method is wired in. Update the RegiterCodeFix method as follows:
+The renaming works not only on the selected symbol, but needs access to the full solution semantic model on order to determine all of the reference points (even from separate projects). As a result, we need to modify how this method is wired in. Update the RegisterCodeFix method as follows:
 ```cs
             context.RegisterCodeFix(
                 CodeAction.Create(
