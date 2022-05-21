@@ -66,27 +66,6 @@ each
 - Another helpful tool for applying multiple fixes is to use the Code Cleanup tool, which can be found by clicking the paintbrush at the bottom of the program.cs code window. This tool can be configured with multiple profiles and groups of rules to auto-apply on the current file. <img src="media\Lab1-CodeCleanup.png">
 - For the other issues, try either selecting the light-bulb, or simply selecting the line in question and pressing `ctrl-.` to get a suggested fix. 
 
-**
--   For IDE0011 – Double click the error then press ctrl-. To raise the
-    fix data tip and enter to apply the fix.
-
--   For CA1001 – Change Person to implement IDisposable as follows. (You
-    will need to build the project once you’ve made this change to clear
-    this error.)
-```cs
-public class Person : IDisposable
-
-{
-
-    public void Dispose()
-
-    {
-
-        ShouldBeDisposed.Dispose();
-
-    }
-```
-**
 At this point, all of the error messages should be cleared. However,
 we’re not done yet. So far we’re only working with the minimal set of
 code analysis rules. Let’s expand the set we are using to see what
