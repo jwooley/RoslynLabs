@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Analyzer1 {
+namespace Analyzer {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace Analyzer1 {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Analyzer1.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Analyzer.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -61,7 +61,7 @@ namespace Analyzer1 {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Controller type name should end in &apos;Controller&apos;.
+        ///   Looks up a localized string similar to Don&apos;t use single character identifiers.
         /// </summary>
         internal static string AnalyzerDescription {
             get {
@@ -70,7 +70,7 @@ namespace Analyzer1 {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type name &apos;{0}&apos; does not end in &apos;Controller&apos;.
+        ///   Looks up a localized string similar to Identifier &apos;{0}&apos; is too short.
         /// </summary>
         internal static string AnalyzerMessageFormat {
             get {
@@ -79,7 +79,7 @@ namespace Analyzer1 {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid Controler Name.
+        ///   Looks up a localized string similar to Short Identifier.
         /// </summary>
         internal static string AnalyzerTitle {
             get {

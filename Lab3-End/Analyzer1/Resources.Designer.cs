@@ -10,6 +10,7 @@
 
 namespace Analyzer1 {
     using System;
+    using System.Reflection;
     
     
     /// <summary>
@@ -19,7 +20,7 @@ namespace Analyzer1 {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -39,7 +40,7 @@ namespace Analyzer1 {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Analyzer1.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Analyzer1.Resources", typeof(Resources).GetTypeInfo().Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -70,7 +71,7 @@ namespace Analyzer1 {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type name &apos;{0}&apos; does not end in &apos;Controller&apos;.
+        ///   Looks up a localized string similar to Type name &apos;{0}&apos; does not end in Controller.
         /// </summary>
         internal static string AnalyzerMessageFormat {
             get {
@@ -79,7 +80,7 @@ namespace Analyzer1 {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid Controler Name.
+        ///   Looks up a localized string similar to Controller Naming Violation.
         /// </summary>
         internal static string AnalyzerTitle {
             get {
